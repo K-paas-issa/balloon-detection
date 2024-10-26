@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-detection-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-detection-server
+  template:
+    metadata:
+      name: my-detection-server-pod
+      labels:
+        app: my-detection-server
+    spec:
+      containers:
+        - name: detection-server
+          image: contest73-backend.kr.ncr.ntruss.com/contest73-detection:latest
+          ports:
+            - containerPort: 8003
+          env:
+            - name: NCP_ACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: server-secret
+                  key: ncp-access-key
+            - name: NCP_SECRETKEY
+              valueFrom:
+                secretKeyRef:
+                  name: server-secret
+                  key: ncp-secret-key
+            - name: MYSQL_HOST
+              value: "my-mysql-service"
+            - name: MYSQL_PORT
+              value: "13006"
+            - name: MYSQL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+      imagePullSecrets:
+        - name: regcred
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-detection-server-service
+spec:
+  selector:
+    app: my-detection-server
+  ports:
+    - port: 8003
+      targetPort: 8003
